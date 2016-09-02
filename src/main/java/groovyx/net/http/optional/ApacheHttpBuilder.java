@@ -119,6 +119,17 @@ public class ApacheHttpBuilder extends HttpBuilder {
         }
     }
 
+    /*
+They can be repeatable, the ApacheHttpBuilder class would have to buffer the InputStreams and only throw them away once
+the response starts. I punted on this when implementing it hoping it wouldn't be a problem.
+
+The correct solution is to implement that buffered input stream, storing the contents in an array of ByteBuffer up to a
+maximum limit configured HttpObjectConfig.Client or HttpObjectConfig.Execution. Default out of the box would be something
+reasonable like 4 MB. Once 4 MB had been buffered the buffer would signal to the Apache HttpClient that the request is no
+longer repeatable and stop buffering. In 99.9% of the cases, the client won't be uploading large amounts of data and this
+is acceptable.
+     */
+
     public class ApacheToServer implements ToServer, HttpEntity {
 
         private final String contentType;
@@ -133,7 +144,7 @@ public class ApacheHttpBuilder extends HttpBuilder {
         }
     
         public boolean isRepeatable() {
-            return false;
+            return true;
         }
 
         public boolean isChunked() {
